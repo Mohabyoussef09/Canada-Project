@@ -9,7 +9,7 @@ import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, session,jsonify
 import MySQLdb.cursors
 from flask_mysqldb import MySQL
-
+import os
 import re
 
 app = Flask(__name__)
@@ -73,7 +73,7 @@ def register():
         elif not re.match(r'[A-Za-z0-9]+', username):
             msg = 'name must contain only characters and numbers !'
         else:
-            cursor.execute('INSERT INTO users VALUES (% s, % s)', (username, password,))
+            cursor.execute('INSERT INTO users (username,password) VALUES (% s, % s)', (username, password,))
             mysql.connection.commit()
             msg = 'You have successfully registered !'
     elif request.method == 'POST':
