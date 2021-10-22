@@ -1,3 +1,5 @@
+import json
+
 from flask_cors import CORS
 from flask import Flask, render_template, request, jsonify
 
@@ -51,9 +53,12 @@ def login():
             #session['id'] = account['id']
             #session['username'] = account['username']
             msg = 'Logged in successfully !'
+
+            id=account["id"]
         else:
             msg = 'Incorrect username / password !'
-    return msg
+            id = -1
+    return json.dumps({"id":id,"message":msg})
 
 @app.route('/signup', methods =['GET', 'POST'])
 def signup():
