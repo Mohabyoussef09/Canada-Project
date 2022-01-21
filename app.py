@@ -71,10 +71,12 @@ def calculateBinAnalysis():
     dataRequest = request.get_json()
     target = dataRequest["target"]
     data=dataRequest["data"]
-    binVariables=dataRequest["binVar"]
     b = BinningSettings()
+    data = pd.DataFrame(data)
+    binVariables=calculate_data_variables(data,b)
     binAnalysis= calculate_bin_variables(data, b, target, binVariables)
     return binAnalysis.to_json(orient='records')
+
 
 #json with binAnalysis and data
 @app.route('/binVariablesOkButton', methods=['GET', 'POST'])
