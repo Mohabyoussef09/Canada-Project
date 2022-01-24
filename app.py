@@ -3,7 +3,7 @@ import json
 
 from flask_cors import CORS
 from flask import Flask, render_template, request, jsonify
-
+import analyzeUtilis as au
 
 import mysql
 import pandas as pd
@@ -13,6 +13,7 @@ from flask_mysqldb import MySQL
 import os
 import re
 
+import constants
 from binning_calculations import calculate_data_variables,calculate_bin_variables,apply_binning
 from analyze_calculations import calculate_distribution_variables,calculate_volatility_variables,calculate_correlation_variables
 from dataset import Dataset
@@ -26,6 +27,7 @@ from binning_settings import (
 )
 import config
 import numpy as np
+
 
 app = Flask(__name__)
 app.debug = True
@@ -82,8 +84,8 @@ def calculateBinAnalysis():
 @app.route('/binVariablesOkButton', methods=['GET', 'POST'])
 def binVariablesOkButton():
     dataRequest = request.get_json()
-    bin_vars=dataRequest["binAnalysis"]
-    data = dataRequest["data"]
+    bin_vars=pd.DataFrame(dataRequest["binAnalysis"])
+    data = pd.DataFrame(dataRequest["data"])
     parent_list = list(bin_vars["variable_parent"].unique())
     binned_list = list(bin_vars["variable"].unique())
     df_binned = apply_binning(data[parent_list], bin_vars)[binned_list]
@@ -93,6 +95,35 @@ def binVariablesOkButton():
     finalBinningData = datasetObject.add_binned_feature_vars(data, df_binned)
 
     return finalBinningData.to_json(orient='records')
+
+
+@app.route('/variableAnalyze', methods=['GET', 'POST'])
+def variableAnalyze():
+    dataRequest = request.get_json()
+    data = pd.DataFrame(dataRequest["data"])
+    targetLabel = dataRequest["target"]
+    probabilityLabel=constants.PROBABILITY_LABEL
+
+    analyze=AnalyzeDisplay()
+    invalid_vars= list(range(config.DEFAULT_COL_COUNT))
+
+    invalid_vars=au.update_invalid_vars_list(data,probabilityLabel)
+    non_event_labels=au.non_event_labels(data,probabilityLabel,targetLabel)
+    modelQualifiedVarLabels=au.model_qualified_var_labels(data,non_event_labels,invalid_vars)
+
+    distributionVariables=calculate_distribution_variables(data[modelQualifiedVarLabels])
+    volatilityVariables=calculate_volatility_variables(data[modelQualifiedVarLabels])
+    correlatioVariables=calculate_correlation_variables(data[modelQualifiedVarLabels])
+
+    x={"distributionVariable":distributionVariables.to_json(orient='records')}
+
+    y={"distributionVariable":type(distributionVariables.to_json(orient='records'))
+           }
+
+    z=type(distributionVariables.to_json(orient='records'))
+
+    u=1
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
