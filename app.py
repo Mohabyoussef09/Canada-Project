@@ -115,14 +115,9 @@ def variableAnalyze():
     volatilityVariables=calculate_volatility_variables(data[modelQualifiedVarLabels])
     correlatioVariables=calculate_correlation_variables(data[modelQualifiedVarLabels])
 
-    x={"distributionVariable":distributionVariables.to_json(orient='records')}
-
-    y={"distributionVariable":type(distributionVariables.to_json(orient='records'))
-           }
-
-    z=type(distributionVariables.to_json(orient='records'))
-
-    u=1
+    return {"distributionVariable":distributionVariables.to_json(orient='records'),
+            "volatileVariable":volatilityVariables.to_json(orient='records'),
+            "correlationVariable":correlatioVariables.to_json(orient='records')}
 
 
 @app.route('/login', methods=['GET', 'POST'])
