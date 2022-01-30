@@ -121,7 +121,8 @@ def variableAnalyze():
     return json.dumps({"distributionVariable":distributionVariables.to_json(orient='records'),
             "volatileVariable":volatilityVariables.to_json(orient='records'),
             "correlationVariable":correlatioVariables.to_json(orient='records'),
-            "invalidVars":invalid_vars})
+            "invalidVars":invalid_vars,
+            "modelQualifiedVarLabels":modelQualifiedVarLabels})
 
 
 @app.route('/variableAnalyzeOk', methods=['GET', 'POST'])
@@ -136,11 +137,13 @@ def variableAnalyzeOk():
     return analyzeOkPressedData.to_json(orient='records')
 
 
-@app.route('/trainData', methods=['GET', 'POST'])
-def trainData():
+@app.route('/trainScreen', methods=['GET', 'POST'])
+def trainScreen():
     dataRequest = request.get_json()
     bin_vars=pd.DataFrame(dataRequest["binAnalysis"])
     data = pd.DataFrame(dataRequest["data"])
+    modelQualifiedVarLabels=pd.DataFrame(dataRequest["modelQualifiedVarLabels"])
+    invalid_vars=pd.DataFrame(dataRequest["invalidVars"])
     probabilityLabel="probability"
     target = dataRequest["target"]
     modelType="Logistic regression"
@@ -151,6 +154,9 @@ def trainData():
 
     dataProfilers=calculate_train_data_profile(data,probabilityLabel,target,bin_vars)
 
+    json.dumps({"panelVars": panelVars.to_json(orient='records'),
+                "varProperty": varProperty.to_json(orient='records'),
+                "dataProfilers": dataProfilers.to_json(orient='records')})
 
 
 @app.route('/login', methods=['GET', 'POST'])
