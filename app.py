@@ -117,6 +117,7 @@ def variableAnalyze():
     distributionVariables=calculate_distribution_variables(data[modelQualifiedVarLabels])
     volatilityVariables=calculate_volatility_variables(data[modelQualifiedVarLabels])
     correlatioVariables=calculate_correlation_variables(data[modelQualifiedVarLabels])
+    correlatioVariables["include_exclude"] = correlatioVariables["include_exclude"].astype('string')
 
     return json.dumps({"distributionVariable":distributionVariables.to_json(orient='records'),
             "volatileVariable":volatilityVariables.to_json(orient='records'),
@@ -170,7 +171,7 @@ def trainData():
     modelType="Logistic regression"
 
     disabledVariableLabels = calculate_disabled_var_labels_from_dataset(data, modelQualifiedVarLabels, invalidVars)
-    model = train_model(data, modelType, modelQualifiedVarLabels, target, disabledVariableLabels, dict())
+    model = train_model(data, modelType, modelQualifiedVarLabels, target,dict() ,disabledVariableLabels)
 
     kpisVariables = calculate_kpis_vars(model)
     collaborationVariables = calculate_calibration_vars(data, target, model)

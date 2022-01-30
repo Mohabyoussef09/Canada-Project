@@ -24,7 +24,7 @@ data=pd.read_csv("train.csv")
 d=calculate_data_variables(data,b)
 d.head()
 
-target="default"
+target="x1"
 bin_vars=calculate_bin_variables(data,b,target,d)
 print(b)
 
@@ -116,13 +116,14 @@ x=10
             self.RANDOM_FOREST: "Random forest",
         }
 '''
-model = train_model(analyzeOkPressedData, modelType,modelQualifiedVarLabels,targetLabel, disabledVariableLabels, dict())
+model = train_model(analyzeOkPressedData, modelType,modelQualifiedVarLabels,targetLabel,dict() ,disabledVariableLabels)
 
 kpisVariables=calculate_kpis_vars(model)
 collaborationVariables=calculate_calibration_vars(analyzeOkPressedData,targetLabel,model)
 distributionVariables=calculate_distribution_vars(model)
 rankingVariables=calculate_ranking_vars(model)
-modelVariables=calculate_model_variable_dynamics_vars(analyzeOkPressedData, targetLabel,bin_vars,modelType,model)
+
+modelVariables=calculate_model_variable_dynamics_vars(analyzeOkPressedData, targetLabel,d,modelType,model,bin_vars_df,woe,binned_var_label,modelled_var_list,bin_as_vars_df)
 
 
 trainDataFrame=analyzeOkPressedData.copy()

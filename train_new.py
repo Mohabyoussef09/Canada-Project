@@ -124,7 +124,7 @@ def calculate_train_data_profile(data,probability_label,target_label,binned_feat
     return pd.DataFrame.from_dict(ret)
 
 
-def train_model(data, model_type,model_qualified_var_labels,target_label, disabled_var_labels: list[str], model_parameters):
+def train_model(data, model_type,model_qualified_var_labels,target_label, model_parameters ,disabled_var_labels: list[str]):
     var_list = [x for x in model_qualified_var_labels if x not in disabled_var_labels]
     data_x =data[var_list].copy()
     target_y = data[target_label].copy()
@@ -249,7 +249,7 @@ def calculate_direction_with_target(bin_as_vars_df,model: Model):
     return df_direction
 
 
-def calculate_binned_num_list(bin_as_vars_df,modelled_var_list: list[str]):
+def calculate_binned_num_list(model,bin_as_vars_df,modelled_var_list):
     if bin_as_vars_df is None:
         return []
     num_bin_as_vars_df = \
@@ -261,9 +261,9 @@ def calculate_binned_num_list(bin_as_vars_df,modelled_var_list: list[str]):
     return [x for x in modelled_var_list if x in list(num_bin_as_vars_df["variable"])]
 
 
-def calculate_non_binned_num_list(modelled_var_list: list[str]):
-    binned_non_num_list = calculate_binned_non_num_list(modelled_var_list)
-    binned_num_list = calculate_binned_non_num_list(modelled_var_list)
+def calculate_non_binned_num_list(bin_as_vars_df,modelled_var_list: list[str]):
+    binned_non_num_list = calculate_binned_non_num_list(bin_as_vars_df,modelled_var_list)
+    binned_num_list = calculate_binned_non_num_list(bin_as_vars_df,modelled_var_list)
     return [x for x in modelled_var_list if x not in binned_non_num_list + binned_num_list]
 
 
@@ -284,7 +284,7 @@ def shock_series(series, cap: bool = False):
     return series + series.std()
 
 
-def calculate_sensitivity_binned(data,bin_vars_df,woe,model: Model, binned_var_label: list[str]):
+def calculate_sensitivity_binned(data,bin_vars_df,woe,model, binned_var_label):
     parent_var_label = calculate_parent_var_label(binned_var_label)
     if parent_var_label is None:
         return np.nan
@@ -311,18 +311,18 @@ def calculate_sensitivity_non_binned_num(data,model: Model, var_label: list[str]
     return (avg_prob_shocked - avg_prob) / avg_prob
 
 
-def calculate_sensitivity(model: Model):
+def calculate_sensitivity(data,bin_vars_df,woe,model,binned_var_label,modelled_var_list,bin_as_vars_df):
     if model is None:
         return None
     modelled_var_list = model.variable_list
     var_list = ["intercept"] + modelled_var_list
-    binned_num_list = calculate_binned_num_list(modelled_var_list)
-    non_binned_num_list = calculate_non_binned_num_list(modelled_var_list)
+    binned_num_list = calculate_binned_num_list(model,bin_as_vars_df,modelled_var_list)
+    non_binned_num_list = calculate_non_binned_num_list(bin_as_vars_df,modelled_var_list)
 
     sensitivity_list = []
     for var in var_list:
         if var in binned_num_list:
-            sensitivity_list.append(calculate_sensitivity_binned(model, var))
+            sensitivity_list.append(calculate_sensitivity_binned(data,bin_vars_df,woe,model, binned_var_label))
         elif var in non_binned_num_list:
             sensitivity_list.append(calculate_sensitivity_non_binned_num(model, var))
         else:
@@ -331,8 +331,7 @@ def calculate_sensitivity(model: Model):
     df_sensitivity = pd.DataFrame({"variable": var_list, "sensitivity": sensitivity_list})
     return df_sensitivity
 
-
-def calculate_model_variable_dynamics_vars(data, target_label,bin_vars_dict,modelType,model: Model):
+def calculate_model_variable_dynamics_vars(data, target_label,bin_vars_dict,modelType,model,bin_vars_df,woe,binned_var_label,modelled_var_list,bin_as_vars_df):
     if model is None:
         return None
 
@@ -343,13 +342,13 @@ def calculate_model_variable_dynamics_vars(data, target_label,bin_vars_dict,mode
         iv_df = calculate_iv(data, target_label,bin_vars_dict,modelled_var_list)
         vif_df = calculate_vif(data,modelled_var_list)
         direction_df = calculate_direction_with_target(bin_vars_dict,model)
-        sensitivity_df = calculate_sensitivity(model)
+        #sensitivity_df = calculate_sensitivity(model,modelled_var_list,bin_vars_dict)
         df_output = model_coef_df
         df_output = df_output.merge(p_values_df, how="left", on="variable")
         df_output = df_output.merge(iv_df, how="left", on="variable")
         df_output = df_output.merge(vif_df, how="left", on="variable")
         df_output = df_output.merge(direction_df, how="left", on="variable")
-        df_output = df_output.merge(sensitivity_df, how="left", on="variable")
+        #df_output = df_output.merge(sensitivity_df, how="left", on="variable")
     elif modelType == RANDOM_FOREST:
         df_output = model.feature_importances
     return df_output
