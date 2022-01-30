@@ -13,7 +13,10 @@ from flask_mysqldb import MySQL
 import os
 import re
 
+from test import *
+from train_new import *
 import constants
+
 from binning_calculations import calculate_data_variables,calculate_bin_variables,apply_binning
 from analyze_calculations import calculate_distribution_variables,calculate_volatility_variables,calculate_correlation_variables
 from dataset import Dataset
@@ -115,9 +118,39 @@ def variableAnalyze():
     volatilityVariables=calculate_volatility_variables(data[modelQualifiedVarLabels])
     correlatioVariables=calculate_correlation_variables(data[modelQualifiedVarLabels])
 
-    return {"distributionVariable":distributionVariables.to_json(orient='records'),
+    return json.dumps({"distributionVariable":distributionVariables.to_json(orient='records'),
             "volatileVariable":volatilityVariables.to_json(orient='records'),
-            "correlationVariable":correlatioVariables.to_json(orient='records')}
+            "correlationVariable":correlatioVariables.to_json(orient='records'),
+            "invalidVars":invalid_vars})
+
+
+@app.route('/variableAnalyzeOk', methods=['GET', 'POST'])
+def variableAnalyzeOk():
+    dataRequest = request.get_json()
+    data = pd.DataFrame(dataRequest["data"])
+    invalid_vars = dataRequest["invalidVars"]
+
+    user_excluded_var_indices = [i for i, x in enumerate(list(data.columns)) if i in invalid_vars]
+    analyzeOkPressedData = update_excluded_vars_list(data, user_excluded_var_indices)
+
+    return analyzeOkPressedData.to_json(orient='records')
+
+
+@app.route('/trainData', methods=['GET', 'POST'])
+def trainData():
+    dataRequest = request.get_json()
+    bin_vars=pd.DataFrame(dataRequest["binAnalysis"])
+    data = pd.DataFrame(dataRequest["data"])
+    probabilityLabel="probability"
+    target = dataRequest["target"]
+    modelType="Logistic regression"
+
+    disabledVariableLabels=calculate_disabled_var_labels_from_dataset(data,modelQualifiedVarLabels,invalid_vars)
+    panelVars=calculate_variable_selection_panel_vars(data,modelQualifiedVarLabels,invalid_vars)
+    varProperty=calculate_variable_property_vars(data,target,disabledVariableLabels,modelQualifiedVarLabels,modelType)
+
+    dataProfilers=calculate_train_data_profile(data,probabilityLabel,target,bin_vars)
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

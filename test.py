@@ -3,7 +3,7 @@ from binning_calculations import calculate_data_variables,calculate_bin_variable
 from analyze_calculations import calculate_distribution_variables,calculate_volatility_variables,calculate_correlation_variables
 from dataset import Dataset
 from main_window import MainWindow
-from modellicity.train_new import *
+from train_new import *
 from train_settings import IncludeExclude
 from analyze_display import AnalyzeDisplay
 import pandas as pd
@@ -96,11 +96,9 @@ user_excluded_var_indices = [i for i, x in enumerate(list(data.columns)) if  i i
 analyzeOkPressedData=update_excluded_vars_list(data,user_excluded_var_indices)
 
 
-
 ############################################
 #train screen
 ###########################################
-
 
 modelType="Logistic regression"
 
