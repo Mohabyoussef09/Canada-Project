@@ -142,21 +142,47 @@ def trainScreen():
     dataRequest = request.get_json()
     bin_vars=pd.DataFrame(dataRequest["binAnalysis"])
     data = pd.DataFrame(dataRequest["data"])
-    modelQualifiedVarLabels=pd.DataFrame(dataRequest["modelQualifiedVarLabels"])
-    invalid_vars=pd.DataFrame(dataRequest["invalidVars"])
+    modelQualifiedVarLabels=dataRequest["modelQualifiedVarLabels"]
+    invalidVars=dataRequest["invalidVars"]
     probabilityLabel="probability"
     target = dataRequest["target"]
     modelType="Logistic regression"
 
-    disabledVariableLabels=calculate_disabled_var_labels_from_dataset(data,modelQualifiedVarLabels,invalid_vars)
-    panelVars=calculate_variable_selection_panel_vars(data,modelQualifiedVarLabels,invalid_vars)
+    disabledVariableLabels=calculate_disabled_var_labels_from_dataset(data,modelQualifiedVarLabels,invalidVars)
+    panelVars=calculate_variable_selection_panel_vars(data,modelQualifiedVarLabels,invalidVars)
     varProperty=calculate_variable_property_vars(data,target,disabledVariableLabels,modelQualifiedVarLabels,modelType)
 
     dataProfilers=calculate_train_data_profile(data,probabilityLabel,target,bin_vars)
 
     json.dumps({"panelVars": panelVars.to_json(orient='records'),
-                "varProperty": varProperty.to_json(orient='records'),
-                "dataProfilers": dataProfilers.to_json(orient='records')})
+                "varProperty": varProperty.to_json(orient='records')})
+
+
+@app.route('/trainData', methods=['GET', 'POST'])
+def trainData():
+    dataRequest = request.get_json()
+    data = pd.DataFrame(dataRequest["data"])
+    modelQualifiedVarLabels=dataRequest["modelQualifiedVarLabels"]
+    invalidVars=dataRequest["invalidVars"]
+    target = dataRequest["target"]
+    bin_vars = pd.DataFrame(dataRequest["binAnalysis"])
+    probabilityLabel = "probability"
+    modelType="Logistic regression"
+
+    disabledVariableLabels = calculate_disabled_var_labels_from_dataset(data, modelQualifiedVarLabels, invalidVars)
+    model = train_model(data, modelType, modelQualifiedVarLabels, target, disabledVariableLabels, dict())
+
+    kpisVariables = calculate_kpis_vars(model)
+    collaborationVariables = calculate_calibration_vars(data, target, model)
+    distributionVariables = calculate_distribution_vars(model)
+    rankingVariables = calculate_ranking_vars(model)
+    modelVariables = calculate_model_variable_dynamics_vars(data, target, bin_vars, modelType, model)
+
+    return json.dumps({"kpisVariables":kpisVariables.to_json(orient='records'),
+            "collaborationVariables":collaborationVariables.to_json(orient='records'),
+            "distributionVariables":distributionVariables.to_json(orient='records'),
+            "rankingVariables":rankingVariables.to_json(orient='records'),
+            "modelVariables":modelVariables.to_json(orient='records')})
 
 
 @app.route('/login', methods=['GET', 'POST'])
