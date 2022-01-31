@@ -186,6 +186,24 @@ def trainData():
             "modelVariables":modelVariables.to_json(orient='records')})
 
 
+@app.route('/trainDataOk', methods=['GET', 'POST'])
+def trainDataOk():
+    dataRequest = request.get_json()
+    data = pd.DataFrame(dataRequest["data"])
+    modelQualifiedVarLabels=dataRequest["modelQualifiedVarLabels"]
+    invalidVars=dataRequest["invalidVars"]
+    target = dataRequest["target"]
+    bin_vars = pd.DataFrame(dataRequest["binAnalysis"])
+    probabilityLabel = "probability"
+    modelType="Logistic regression"
+
+    disabledVariableLabels = calculate_disabled_var_labels_from_dataset(data, modelQualifiedVarLabels, invalidVars)
+    model = train_model(data, modelType, modelQualifiedVarLabels, target,dict() ,disabledVariableLabels)
+
+    data[probabilityLabel] = model.prob_y
+    return data.to_json(orient='records')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     msg = ""
